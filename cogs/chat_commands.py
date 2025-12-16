@@ -14,20 +14,20 @@ class ChatCommands(commands.Cog):
         self.ai_handler = AIHandler()
         self.context_manager = ContextManager()
     
-    @commands.command(name="ping")
-    async def ping(self, ctx: commands.Context):
-        """Check if the bot is responsive."""
-        await ctx.send(f"Pong! Latency: {round(self.bot.latency * 1000)}ms")
+    @commands.command(name="botping")
+    async def botping(self, ctx: commands.Context):
+        """Check if the bot is responsive (namespaced to avoid conflicts)."""
+        await ctx.send(f"Brax Pong! Latency: {round(self.bot.latency * 1000)}ms")
     
-    @commands.command(name="help")
-    async def help_command(self, ctx: commands.Context):
-        """Display help information."""
+    @commands.command(name="bothelp")
+    async def bothelp(self, ctx: commands.Context):
+        """Display help information (namespaced to avoid conflicts)."""
         help_text = """
 **Available Commands:**
-`!ping` - Check bot responsiveness
-`!help` - Show this help message
-`!chat <message>` - Chat with the AI
-`!clear` - Clear conversation context
+`!botping` - Check bot responsiveness
+`!bothelp` - Show this help message
+`!ask <message>` - Chat with the AI
+`!clearctx` - Clear conversation context
 `!join` - Join your voice channel
 `!leave` - Leave the voice channel
 
@@ -36,9 +36,9 @@ Once in a voice channel, the bot will listen and respond to your speech!
         """
         await ctx.send(help_text)
     
-    @commands.command(name="chat")
-    async def chat(self, ctx: commands.Context, *, message: str):
-        """Chat with the AI bot."""
+    @commands.command(name="ask")
+    async def ask(self, ctx: commands.Context, *, message: str):
+        """Chat with the AI bot (namespaced to avoid conflicts)."""
         await ctx.typing()
         
         # Get user context
@@ -54,9 +54,9 @@ Once in a voice channel, the bot will listen and respond to your speech!
         
         await ctx.send(response)
     
-    @commands.command(name="clear")
+    @commands.command(name="clearctx")
     async def clear_context(self, ctx: commands.Context):
-        """Clear conversation context for the user."""
+        """Clear conversation context for the user (namespaced to avoid conflicts)."""
         self.context_manager.clear_context(ctx.author.id)
         await ctx.send("Conversation context cleared!")
 
