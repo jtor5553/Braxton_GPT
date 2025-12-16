@@ -24,8 +24,8 @@ async def on_ready():
     
     # Load cogs
     try:
-        await bot.load_extension("cogs.chat_commands")
-        await bot.load_extension("cogs.voice_commands")
+        bot.load_extension("cogs.chat_commands")
+        bot.load_extension("cogs.voice_commands")
         print("All cogs loaded successfully!")
     except Exception as e:
         print(f"Error loading cogs: {e}")

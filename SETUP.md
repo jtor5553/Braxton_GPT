@@ -19,7 +19,7 @@ source venv/bin/activate  # macOS/Linux
 venv\Scripts\activate  # Windows
 ```
 
-### 2. Install Dependencies
+### 2. Install Dependencies (Pycord)
 ```bash
 pip install -r requirements.txt
 ```
@@ -69,8 +69,8 @@ python bot.py
 
 ## 🧪 Test Commands
 
-1. **Test connection:** `!ping` in Discord
-2. **Test text chat:** `!chat hello`
+1. **Test connection:** `!botping` in Discord
+2. **Test text chat:** `!ask hello`
 3. **Join voice:** `!join` (while in a voice channel)
 4. **Test voice:** Speak in the voice channel
 5. **Leave voice:** `!leave`

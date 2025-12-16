@@ -1,8 +1,8 @@
 """Voice channel commands and audio processing."""
 import discord
 from discord.ext import commands
-from discord.sinks import MP3Sink
 import asyncio
+from discord.errors import RecordingException
 import io
 import os
 import tempfile
@@ -46,16 +46,30 @@ class VoiceCommands(commands.Cog):
             vc = await channel.connect()
             self.voice_clients[guild_id] = vc
             
+            # Wait until fully connected
+            wait_attempts = 0
+            while not vc.is_connected() and wait_attempts < 10:
+                await asyncio.sleep(0.1)
+                wait_attempts += 1
+            
+            if not vc.is_connected():
+                await ctx.send("Failed to connect to the voice channel.")
+                return
+            
             # Create audio sink for capturing audio
             sink = AudioSink()
             self.audio_sinks[guild_id] = sink
             
             # Start recording with callback
-            vc.start_recording(
-                sink,
-                self.on_audio_received,
-                sync_start=False
-            )
+            try:
+                vc.start_recording(
+                    sink,
+                    self.on_audio_received,
+                    sync_start=False
+                )
+            except RecordingException as e:
+                await ctx.send(f"Error starting recording: {e}")
+                return
             
             # Start background task to process audio periodically
             self.bot.loop.create_task(self.process_audio_periodically(guild_id))
@@ -75,8 +89,11 @@ class VoiceCommands(commands.Cog):
         
         vc = self.voice_clients[guild_id]
         
-        # Stop recording
-        vc.stop_recording()
+        # Stop recording if active
+        try:
+            vc.stop_recording()
+        except RecordingException:
+            pass
         
         # Disconnect
         await vc.disconnect()
@@ -212,7 +229,7 @@ class VoiceCommands(commands.Cog):
             self.processing_users.discard(user_id)
 
 
-async def setup(bot: commands.Bot):
+def setup(bot: commands.Bot):
     """Setup function for loading the cog."""
-    await bot.add_cog(VoiceCommands(bot))
+    bot.add_cog(VoiceCommands(bot))
 

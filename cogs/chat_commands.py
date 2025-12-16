@@ -39,18 +39,17 @@ Once in a voice channel, the bot will listen and respond to your speech!
     @commands.command(name="ask")
     async def ask(self, ctx: commands.Context, *, message: str):
         """Chat with the AI bot (namespaced to avoid conflicts)."""
-        await ctx.typing()
-        
-        # Get user context
-        user_id = ctx.author.id
-        context = self.context_manager.get_context(user_id)
-        
-        # Generate AI response
-        response = await self.ai_handler.generate_response(message, context)
-        
-        # Add messages to context
-        self.context_manager.add_message(user_id, "user", message)
-        self.context_manager.add_message(user_id, "assistant", response)
+        async with ctx.typing():
+            # Get user context
+            user_id = ctx.author.id
+            context = self.context_manager.get_context(user_id)
+            
+            # Generate AI response
+            response = await self.ai_handler.generate_response(message, context)
+            
+            # Add messages to context
+            self.context_manager.add_message(user_id, "user", message)
+            self.context_manager.add_message(user_id, "assistant", response)
         
         await ctx.send(response)
     
@@ -61,7 +60,7 @@ Once in a voice channel, the bot will listen and respond to your speech!
         await ctx.send("Conversation context cleared!")
 
 
-async def setup(bot: commands.Bot):
+def setup(bot: commands.Bot):
     """Setup function for loading the cog."""
-    await bot.add_cog(ChatCommands(bot))
+    bot.add_cog(ChatCommands(bot))
 

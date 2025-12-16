@@ -13,7 +13,7 @@ A Discord bot that can join voice channels, listen to users speaking, transcribe
 
 ## Prerequisites
 
-- Python 3.9 or higher
+- Python 3.10 or 3.11 (Pycord does not yet support 3.14)
 - FFmpeg installed on your system
 - Discord Bot Token (from [Discord Developer Portal](https://discord.com/developers/applications))
 - OpenAI API Key (from [OpenAI Platform](https://platform.openai.com/))
@@ -29,7 +29,7 @@ cd /Users/james/Desktop/Folders/Braxton_GPT
 ### 2. Create a virtual environment
 
 ```bash
-python -m venv venv
+python3.11 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
@@ -49,7 +49,7 @@ sudo apt-get install ffmpeg libopus0 libffi-dev libnacl-dev python3-dev
 **Windows:**
 Download FFmpeg from [ffmpeg.org](https://ffmpeg.org/download.html) and add it to your PATH.
 
-### 4. Install Python dependencies
+### 4. Install Python dependencies (Pycord)
 
 ```bash
 pip install -r requirements.txt
@@ -112,10 +112,10 @@ You should see a message indicating the bot has connected to Discord.
 ### Commands
 
 **Text Commands:**
-- `!ping` - Check bot responsiveness
-- `!help` - Show help information
-- `!chat <message>` - Chat with the AI via text
-- `!clear` - Clear your conversation context
+- `!botping` - Check bot responsiveness
+- `!bothelp` - Show help information
+- `!ask <message>` - Chat with the AI via text
+- `!clearctx` - Clear your conversation context
 
 **Voice Commands:**
 - `!join` - Bot joins your voice channel and starts listening
@@ -203,8 +203,8 @@ Estimated costs per hour of usage:
 ### Testing
 
 Test each component individually:
-1. Test bot connection: `!ping`
-2. Test text chat: `!chat hello`
+1. Test bot connection: `!botping`
+2. Test text chat: `!ask hello`
 3. Test voice join: `!join`
 4. Test voice interaction: Speak in voice channel
 
@@ -221,5 +221,5 @@ This project is provided as-is for educational and personal use.
 ## Support
 
 For issues or questions, refer to:
-- [Discord.py Documentation](https://discordpy.readthedocs.io/)
+- [Pycord Documentation](https://docs.pycord.dev/)
 - [OpenAI API Documentation](https://platform.openai.com/docs)
