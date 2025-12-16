@@ -40,56 +40,16 @@ class VoiceCommands(commands.Cog):
         if guild_id in self.voice_clients:
             await self.leave_voice(ctx)
         
-        # Connect to voice channel
-        vc = None
+        # Connect to voice channel (no recording yet; diagnostics only)
         try:
-            # Try to connect (no auto-reconnect). Increase wait budget for media handshake.
-            vc = await channel.connect(timeout=10, reconnect=False)
+            vc = await channel.connect()
             self.voice_clients[guild_id] = vc
-            
-            # Wait until fully connected (up to 5 seconds)
-            wait_attempts = 0
-            while not vc.is_connected() and wait_attempts < 50:
-                await asyncio.sleep(0.1)
-                wait_attempts += 1
-            
-            if not vc.is_connected():
-                await ctx.send("Failed to connect to the voice channel.")
-                raise RuntimeError("Voice client did not connect")
-            
-            # Create audio sink for capturing audio
-            sink = AudioSink()
-            self.audio_sinks[guild_id] = sink
-            
-            # Start recording with callback
-            try:
-                vc.start_recording(
-                    sink,
-                    self.on_audio_received,
-                    sync_start=False
-                )
-            except Exception as e:  # Broad catch: recording startup differs by backend versions
-                await ctx.send(f"Error starting recording: {e}")
-                raise
-            
-            # Start background task to process audio periodically
-            self.bot.loop.create_task(self.process_audio_periodically(guild_id))
-            
-            await ctx.send(f"Joined {channel.name} and started listening!")
+
+            await ctx.send(f"Joined {channel.name}! (voice connection only, recording disabled for now)")
+            print(f"[voice] joined channel {channel.name} in guild {guild_id}, vc.is_connected={vc.is_connected()}")
         except Exception as e:
-            await ctx.send(f"Error joining voice channel: {e}")
-            # Ensure cleanup on failure
-            if guild_id in self.voice_clients:
-                try:
-                    self.voice_clients[guild_id].stop_recording()
-                except Exception:
-                    pass
-                try:
-                    await self.voice_clients[guild_id].disconnect(force=True)
-                except Exception:
-                    pass
-                self.voice_clients.pop(guild_id, None)
-            self.audio_sinks.pop(guild_id, None)
+            await ctx.send(f"Error joining voice channel (connect step): {e!r}")
+            print(f"[voice] join failed for guild {guild_id}: {e!r}")
     
     @commands.command(name="leave")
     async def leave_voice(self, ctx: commands.Context):
