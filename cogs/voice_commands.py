@@ -2,7 +2,6 @@
 import discord
 from discord.ext import commands
 import asyncio
-from discord.errors import RecordingException
 import io
 import os
 import tempfile
@@ -37,24 +36,26 @@ class VoiceCommands(commands.Cog):
         channel = ctx.author.voice.channel
         guild_id = ctx.guild.id
         
-        # Leave existing connection if any
+        # If already connected somewhere, leave first
         if guild_id in self.voice_clients:
             await self.leave_voice(ctx)
         
         # Connect to voice channel
+        vc = None
         try:
-            vc = await channel.connect()
+            # Try to connect (no auto-reconnect). Increase wait budget for media handshake.
+            vc = await channel.connect(timeout=10, reconnect=False)
             self.voice_clients[guild_id] = vc
             
-            # Wait until fully connected
+            # Wait until fully connected (up to 5 seconds)
             wait_attempts = 0
-            while not vc.is_connected() and wait_attempts < 10:
+            while not vc.is_connected() and wait_attempts < 50:
                 await asyncio.sleep(0.1)
                 wait_attempts += 1
             
             if not vc.is_connected():
                 await ctx.send("Failed to connect to the voice channel.")
-                return
+                raise RuntimeError("Voice client did not connect")
             
             # Create audio sink for capturing audio
             sink = AudioSink()
@@ -67,9 +68,9 @@ class VoiceCommands(commands.Cog):
                     self.on_audio_received,
                     sync_start=False
                 )
-            except RecordingException as e:
+            except Exception as e:  # Broad catch: recording startup differs by backend versions
                 await ctx.send(f"Error starting recording: {e}")
-                return
+                raise
             
             # Start background task to process audio periodically
             self.bot.loop.create_task(self.process_audio_periodically(guild_id))
@@ -77,29 +78,40 @@ class VoiceCommands(commands.Cog):
             await ctx.send(f"Joined {channel.name} and started listening!")
         except Exception as e:
             await ctx.send(f"Error joining voice channel: {e}")
+            # Ensure cleanup on failure
+            if guild_id in self.voice_clients:
+                try:
+                    self.voice_clients[guild_id].stop_recording()
+                except Exception:
+                    pass
+                try:
+                    await self.voice_clients[guild_id].disconnect(force=True)
+                except Exception:
+                    pass
+                self.voice_clients.pop(guild_id, None)
+            self.audio_sinks.pop(guild_id, None)
     
     @commands.command(name="leave")
     async def leave_voice(self, ctx: commands.Context):
         """Leave the voice channel."""
         guild_id = ctx.guild.id
-        
-        if guild_id not in self.voice_clients:
+        vc = self.voice_clients.get(guild_id) or ctx.voice_client
+        if vc is None:
             await ctx.send("I'm not in a voice channel!")
             return
-        
-        vc = self.voice_clients[guild_id]
         
         # Stop recording if active
         try:
             vc.stop_recording()
-        except RecordingException:
+        except Exception:
             pass
         
         # Disconnect
-        await vc.disconnect()
+        await vc.disconnect(force=True)
         
         # Cleanup
-        del self.voice_clients[guild_id]
+        if guild_id in self.voice_clients:
+            del self.voice_clients[guild_id]
         if guild_id in self.audio_sinks:
             del self.audio_sinks[guild_id]
         
